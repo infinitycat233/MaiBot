@@ -337,15 +337,14 @@ class ThinkFlowChat:
 
                 # 思考前脑内状态
                 try:
+                    # 位于think_flow_chat.py文件第343行左右
                     with Timer("思考前脑内状态", timing_results):
                         current_mind, past_mind = await heartflow.get_subheartflow(
                             chat.stream_id
                         ).do_thinking_before_reply(
-                            message_txt=message.processed_plain_text,
-                            sender_info=message.message_info.user_info,
                             chat_stream=chat,
-                            obs_id=get_mid_memory_id,
                             extra_info=tool_result_info,
+                            obs_id=get_mid_memory_id,
                         )
                 except Exception as e:
                     logger.error(f"心流思考前脑内状态失败: {e}")
