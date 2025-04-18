@@ -284,7 +284,7 @@ class ThinkFlowChat:
                     with Timer("思考前使用工具", timing_results):
                         tool_result = await self.tool_user.use_tool(
                             message.processed_plain_text,
-                            message.message_info.user_info.user_nickname,
+                            # message.message_info.user_info.user_nickname,
                             chat,
                             heartflow.get_subheartflow(chat.stream_id),
                         )
