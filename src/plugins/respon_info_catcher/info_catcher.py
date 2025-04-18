@@ -65,12 +65,14 @@ class InfoCatcher:
 
     def catch_afer_shf_step(self, step_duration: float, past_mind: str, current_mind: str):
         self.timing_results["sub_heartflow_step_time"] = step_duration
-        if len(past_mind) > 1:
+        if isinstance(past_mind, list) and len(past_mind) > 0:
             self.heartflow_data["sub_heartflow_before"] = past_mind[-1]
-            self.heartflow_data["sub_heartflow_now"] = current_mind
+        elif isinstance(past_mind, str):
+            self.heartflow_data["sub_heartflow_before"] = past_mind
         else:
-            self.heartflow_data["sub_heartflow_before"] = past_mind[-1]
-            self.heartflow_data["sub_heartflow_now"] = current_mind
+            self.heartflow_data["sub_heartflow_before"] = ""
+
+        self.heartflow_data["sub_heartflow_now"] = current_mind
 
     def catch_after_llm_generated(self, prompt: str, response: str, reasoning_content: str = "", model_name: str = ""):
         if self.response_mode == "heart_flow":
