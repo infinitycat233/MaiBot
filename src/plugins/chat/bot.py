@@ -79,14 +79,14 @@ class ChatBot:
 
             # 用户黑名单拦截
             if userinfo.user_id in global_config.ban_user_id:
-                logger.debug(f"用户{userinfo.user_id}被禁止回复")
+                logger.info(f"用户{userinfo.user_id}被禁止回复")
                 return
 
             if groupinfo is None:
                 logger.trace("检测到私聊消息，检查")
                 # 好友黑名单拦截
                 if userinfo.user_id not in global_config.talk_allowed_private:
-                    logger.debug(f"用户{userinfo.user_id}没有私聊权限")
+                    logger.info(f"用户{userinfo.user_id}没有私聊权限")
                     return
 
             # 群聊黑名单拦截

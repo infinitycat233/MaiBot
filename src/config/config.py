@@ -748,6 +748,17 @@ class BotConfig:
                     raise ValueError("配置文件错误：[identity] 部分的 identity_detail 不能为空字符串")
 
                 logger.success(f"成功加载配置文件: {config_path}")
+                
+                # 配置加载完成后检查数据库连接
+                from src.common.database import get_db
+                try:
+                    db = get_db()
+                    collection_names = db.list_collection_names()
+                    logger.success(f"MongoDB数据库连接检查成功，找到{len(collection_names)}个集合")
+                except Exception as e:
+                    logger.error(f"数据库连接检查失败: {e}")
+                    logger.warning("请确保MongoDB服务正常运行并检查连接配置")
+                    raise ConnectionError(f"MongoDB数据库连接失败，请检查连接配置并确保MongoDB服务正常运行: {e}") from e
 
         return config
 

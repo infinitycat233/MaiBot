@@ -299,3 +299,5 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+llm_statistics.txt
+src/plugins/remote/client_uuid.json
