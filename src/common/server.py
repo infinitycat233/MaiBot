@@ -82,7 +82,11 @@ class Server:
         """安全关闭服务器"""
         if self._server:
             self._server.should_exit = True
-            await self._server.shutdown()
+            if hasattr(self._server, 'servers'):
+                await self._server.shutdown()
+            else:
+                if hasattr(self._server, 'shutdown'):
+                    await self._server.shutdown()
             self._server = None
 
     def get_app(self) -> FastAPI:

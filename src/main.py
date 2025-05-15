@@ -1,5 +1,7 @@
 import asyncio
 import time
+import os
+
 from maim_message import MessageServer
 from .common.remote import TelemetryHeartBeatTask
 from .manager.async_task_manager import async_task_manager
@@ -41,6 +43,41 @@ class MainSystem:
     async def initialize(self):
         """初始化系统组件"""
         logger.debug(f"正在唤醒{global_config.BOT_NICKNAME}......")
+
+        # 检查并迁移数据库
+        try:
+            from src.db.database_checker import check_and_migrate_database
+
+            # 获取数据库类型
+            db_type = os.getenv("DB_TYPE", "sqlite").lower()
+
+            # 显示当前使用的数据库类型
+            logger.info(f"当前使用的数据库类型: {db_type}")
+
+            # 检查特殊数据库类型
+            if db_type == "mariadb":
+                logger.info("检测到使用MariaDB数据库，将进行特殊优化")
+            elif db_type == "mysql":
+                logger.info("检测到使用MySQL数据库")
+            elif db_type == "postgresql":
+                logger.info("检测到使用PostgreSQL数据库")
+            elif db_type == "mongodb":
+                logger.info("检测到使用MongoDB数据库")
+
+            if check_and_migrate_database():
+                logger.success("数据库检查和迁移成功")
+
+                if db_type == "mariadb":
+                    logger.info("MariaDB数据库初始化成功，已应用特殊优化")
+                elif db_type == "mysql":
+                    logger.info("MySQL数据库初始化成功")
+                elif db_type == "postgresql":
+                    logger.info("PostgreSQL数据库初始化成功")
+            else:
+                logger.warning("数据库检查或迁移过程中存在问题，但将继续尝试启动系统")
+        except Exception as e:
+            logger.error(f"数据库检查和迁移失败: {e}")
+            logger.warning("将继续尝试启动系统，但可能会因数据库问题而失败")
 
         # 其他初始化任务
         await asyncio.gather(self._init_components())
