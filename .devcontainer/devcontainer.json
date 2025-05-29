@@ -10,9 +10,16 @@
 		"ghcr.io/devcontainers/features/github-cli:1": {}
 	},
 	"forwardPorts": [
-		"8000:8000"
+		"8001:8000"
 	],
-	"postCreateCommand": "pip3 install --user -r requirements.txt",
+	"postCreateCommand": "pip3 install --user -r requirements.txt -i https://mirror.nju.edu.cn/pypi/web/simple && git config --global http.proxy http://10.31.3.148:20171 && git config --global https.proxy http://10.31.3.148:20171",
+  	"containerEnv": {
+		"HTTP_PROXY": "http://10.31.3.148:20171",
+		"HTTPS_PROXY": "http://10.31.3.148:20171",
+		"http_proxy": "http://10.31.3.148:20171",
+		"https_proxy": "http://10.31.3.148:20171",
+		"NO_PROXY": "localhost,127.0.0.1,::1,10.*"
+	},
 	"customizations": {
 		"jetbrains": {
 			"backend": "PyCharm"
