@@ -20,7 +20,6 @@ before_generate_reply_handle 确定要回复后，在生成回复前的处理
 after_generate_reply_handle 确定要回复后，在生成回复后的处理
 not_reply_handle 确定不回复后的处理
 get_reply_probability 获取回复概率
-bombing_buffer_message_handle 缓冲器炸飞消息后的处理
 get_variable_parameters 暂不确定
 set_variable_parameters 暂不确定
 以下2个方法根据你的实现可以做调整：
@@ -136,11 +135,6 @@ class BaseWillingManager(ABC):
     async def get_reply_probability(self, message_id: str):
         """抽象方法：获取回复概率"""
         raise NotImplementedError
-
-    @abstractmethod
-    async def bombing_buffer_message_handle(self, message_id: str):
-        """抽象方法：炸飞消息处理"""
-        pass
 
     async def get_willing(self, chat_id: str):
         """获取指定聊天流的回复意愿"""

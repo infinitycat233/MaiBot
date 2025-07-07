@@ -109,3 +109,4 @@ async def get_system_basic_info():
 def start_api_server():
     """启动API服务器"""
     get_global_server().register_router(router, prefix="/api/v1")
+    # pass

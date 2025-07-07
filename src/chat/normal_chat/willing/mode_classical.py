@@ -33,27 +33,9 @@ class ClassicalWillingManager(BaseWillingManager):
         if willing_info.is_mentioned_bot:
             current_willing += 1 if current_willing < 1.0 else 0.05
 
-        is_emoji_not_reply = False
-        if willing_info.is_emoji:
-            if global_config.normal_chat.emoji_response_penalty != 0:
-                current_willing *= global_config.normal_chat.emoji_response_penalty
-            else:
-                is_emoji_not_reply = True
-
-        # 处理picid格式消息，直接不回复
-        is_picid_not_reply = False
-        if willing_info.is_picid:
-            is_picid_not_reply = True
-
         self.chat_reply_willing[chat_id] = min(current_willing, 3.0)
 
         reply_probability = min(max((current_willing - 0.5), 0.01) * 2, 1)
-
-        if is_emoji_not_reply:
-            reply_probability = 0
-
-        if is_picid_not_reply:
-            reply_probability = 0
 
         return reply_probability
 
@@ -70,9 +52,6 @@ class ClassicalWillingManager(BaseWillingManager):
         current_willing = self.chat_reply_willing.get(chat_id, 0)
         if current_willing < 1:
             self.chat_reply_willing[chat_id] = min(1.0, current_willing + 0.4)
-
-    async def bombing_buffer_message_handle(self, message_id):
-        return await super().bombing_buffer_message_handle(message_id)
 
     async def not_reply_handle(self, message_id):
         return await super().not_reply_handle(message_id)

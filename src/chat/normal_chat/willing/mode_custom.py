@@ -17,8 +17,5 @@ class CustomWillingManager(BaseWillingManager):
     async def get_reply_probability(self, message_id: str):
         pass
 
-    async def bombing_buffer_message_handle(self, message_id: str):
-        pass
-
     def __init__(self):
         super().__init__()

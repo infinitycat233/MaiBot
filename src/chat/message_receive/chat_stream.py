@@ -47,6 +47,16 @@ class ChatMessageContext:
                 return False
         return True
 
+    def get_priority_mode(self) -> str:
+        """获取优先级模式"""
+        return self.message.priority_mode
+
+    def get_priority_info(self) -> Optional[dict]:
+        """获取优先级信息"""
+        if hasattr(self.message, "priority_info") and self.message.priority_info:
+            return self.message.priority_info
+        return None
+
 
 class ChatStream:
     """聊天流对象，存储一个完整的聊天上下文"""

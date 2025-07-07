@@ -20,7 +20,7 @@ class HFCVersionManager:
     """HFC版本号管理器"""
 
     # 默认版本号
-    DEFAULT_VERSION = "v4.0.0"
+    DEFAULT_VERSION = "v5.0.0"
 
     # 当前运行时版本号
     _current_version: Optional[str] = None

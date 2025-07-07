@@ -19,7 +19,7 @@ from src.common.logger import get_logger
 from src.individuality.individuality import get_individuality, Individuality
 from src.common.server import get_global_server, Server
 from rich.traceback import install
-from src.api.main import start_api_server
+# from src.api.main import start_api_server
 
 # 导入新的插件管理器
 from src.plugin_system.core.plugin_manager import plugin_manager
@@ -85,8 +85,8 @@ class MainSystem:
         await async_task_manager.add_task(TelemetryHeartBeatTask())
 
         # 启动API服务器
-        start_api_server()
-        logger.info("API服务器启动成功")
+        # start_api_server()
+        # logger.info("API服务器启动成功")
 
         # 加载所有actions，包括默认的和插件的
         plugin_count, component_count = plugin_manager.load_all_plugins()
@@ -205,7 +205,7 @@ class MainSystem:
         expression_learner = get_expression_learner()
         while True:
             await asyncio.sleep(global_config.expression.learning_interval)
-            if global_config.expression.enable_expression_learning:
+            if global_config.expression.enable_expression_learning and global_config.expression.enable_expression:
                 logger.info("[表达方式学习] 开始学习表达方式...")
                 await expression_learner.learn_and_store_expression()
                 logger.info("[表达方式学习] 表达方式学习完成")

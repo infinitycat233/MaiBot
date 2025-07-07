@@ -80,13 +80,15 @@ class ExpressionSelector:
         )
 
     def get_random_expressions(
-        self, chat_id: str, style_num: int, grammar_num: int, personality_num: int
+        self, chat_id: str, total_num: int, style_percentage: float, grammar_percentage: float
     ) -> Tuple[List[Dict[str, str]], List[Dict[str, str]]]:
         (
             learnt_style_expressions,
             learnt_grammar_expressions,
-            personality_expressions,
         ) = self.expression_learner.get_expression_by_chat_id(chat_id)
+
+        style_num = int(total_num * style_percentage)
+        grammar_num = int(total_num * grammar_percentage)
 
         # 按权重抽样（使用count作为权重）
         if learnt_style_expressions:
@@ -101,13 +103,7 @@ class ExpressionSelector:
         else:
             selected_grammar = []
 
-        if personality_expressions:
-            personality_weights = [expr.get("count", 1) for expr in personality_expressions]
-            selected_personality = weighted_sample(personality_expressions, personality_weights, personality_num)
-        else:
-            selected_personality = []
-
-        return selected_style, selected_grammar, selected_personality
+        return selected_style, selected_grammar
 
     def update_expressions_count_batch(self, expressions_to_update: List[Dict[str, str]], increment: float = 0.1):
         """对一批表达方式更新count值，按文件分组后一次性写入"""
@@ -174,7 +170,7 @@ class ExpressionSelector:
         """使用LLM选择适合的表达方式"""
 
         # 1. 获取35个随机表达方式（现在按权重抽取）
-        style_exprs, grammar_exprs, personality_exprs = self.get_random_expressions(chat_id, 25, 25, 10)
+        style_exprs, grammar_exprs = self.get_random_expressions(chat_id, 50, 0.5, 0.5)
 
         # 2. 构建所有表达方式的索引和情境列表
         all_expressions = []
@@ -193,14 +189,6 @@ class ExpressionSelector:
             if isinstance(expr, dict) and "situation" in expr and "style" in expr:
                 expr_with_type = expr.copy()
                 expr_with_type["type"] = "grammar"
-                all_expressions.append(expr_with_type)
-                all_situations.append(f"{len(all_expressions)}.{expr['situation']}")
-
-        # 添加personality表达方式
-        for expr in personality_exprs:
-            if isinstance(expr, dict) and "situation" in expr and "style" in expr:
-                expr_with_type = expr.copy()
-                expr_with_type["type"] = "style_personality"
                 all_expressions.append(expr_with_type)
                 all_situations.append(f"{len(all_expressions)}.{expr['situation']}")
 
@@ -260,7 +248,7 @@ class ExpressionSelector:
 
             # 对选中的所有表达方式，一次性更新count数
             if valid_expressions:
-                self.update_expressions_count_batch(valid_expressions, 0.003)
+                self.update_expressions_count_batch(valid_expressions, 0.006)
 
             # logger.info(f"LLM从{len(all_expressions)}个情境中选择了{len(valid_expressions)}个")
             return valid_expressions

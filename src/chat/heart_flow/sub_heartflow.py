@@ -62,7 +62,10 @@ class SubHeartflow:
         """异步初始化方法，创建兴趣流并确定聊天类型"""
 
         # 根据配置决定初始状态
-        if global_config.chat.chat_mode == "focus":
+        if not self.is_group_chat:
+            logger.debug(f"{self.log_prefix} 检测到是私聊，将直接尝试进入 FOCUSED 状态。")
+            await self.change_chat_state(ChatState.FOCUSED)
+        elif global_config.chat.chat_mode == "focus":
             logger.debug(f"{self.log_prefix} 配置为 focus 模式，将直接尝试进入 FOCUSED 状态。")
             await self.change_chat_state(ChatState.FOCUSED)
         else:  # "auto" 或其他模式保持原有逻辑或默认为 NORMAL
@@ -123,6 +126,7 @@ class SubHeartflow:
                     chat_stream=chat_stream,
                     interest_dict=self.interest_dict,
                     on_switch_to_focus_callback=self._handle_switch_to_focus_request,
+                    get_cooldown_progress_callback=self.get_cooldown_progress,
                 )
 
             logger.info(f"{log_prefix} 开始普通聊天，随便水群...")
@@ -134,27 +138,31 @@ class SubHeartflow:
             self.normal_chat_instance = None  # 启动/初始化失败，清理实例
             return False
 
-    async def _handle_switch_to_focus_request(self) -> None:
+    async def _handle_switch_to_focus_request(self) -> bool:
         """
         处理来自NormalChat的切换到focus模式的请求
 
         Args:
             stream_id: 请求切换的stream_id
+        Returns:
+            bool: 切换成功返回True，失败返回False
         """
         logger.info(f"{self.log_prefix} 收到NormalChat请求切换到focus模式")
 
         # 检查是否在focus冷却期内
         if self.is_in_focus_cooldown():
             logger.info(f"{self.log_prefix} 正在focus冷却期内，忽略切换到focus模式的请求")
-            return
+            return False
 
         # 切换到focus模式
         current_state = self.chat_state.chat_status
         if current_state == ChatState.NORMAL:
             await self.change_chat_state(ChatState.FOCUSED)
             logger.info(f"{self.log_prefix} 已根据NormalChat请求从NORMAL切换到FOCUSED状态")
+            return True
         else:
             logger.warning(f"{self.log_prefix} 当前状态为{current_state.value}，无法切换到FOCUSED状态")
+            return False
 
     async def _handle_stop_focus_chat_request(self) -> None:
         """
@@ -360,17 +368,6 @@ class SubHeartflow:
             return self.normal_chat_instance.get_action_manager()
         return None
 
-    def set_normal_chat_planner_enabled(self, enabled: bool):
-        """设置NormalChat的planner是否启用
-
-        Args:
-            enabled: 是否启用planner
-        """
-        if self.normal_chat_instance:
-            self.normal_chat_instance.set_planner_enabled(enabled)
-        else:
-            logger.warning(f"{self.log_prefix} NormalChat实例不存在，无法设置planner状态")
-
     async def get_full_state(self) -> dict:
         """获取子心流的完整状态，包括兴趣、思维和聊天状态。"""
         return {
@@ -436,3 +433,26 @@ class SubHeartflow:
             )
 
         return is_cooling
+
+    def get_cooldown_progress(self) -> float:
+        """获取冷却进度，返回0-1之间的值
+
+        Returns:
+            float: 0表示刚开始冷却，1表示冷却完成
+        """
+        if self.last_focus_exit_time == 0:
+            return 1.0  # 没有冷却，返回1表示完全恢复
+
+        # 基础冷却时间10分钟，受auto_focus_threshold调控
+        base_cooldown = 10 * 60  # 10分钟转换为秒
+        cooldown_duration = base_cooldown / global_config.chat.auto_focus_threshold
+
+        current_time = time.time()
+        elapsed_since_exit = current_time - self.last_focus_exit_time
+
+        if elapsed_since_exit >= cooldown_duration:
+            return 1.0  # 冷却完成
+
+        # 计算进度：0表示刚开始冷却，1表示冷却完成
+        progress = elapsed_since_exit / cooldown_duration
+        return progress

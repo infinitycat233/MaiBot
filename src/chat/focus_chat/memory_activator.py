@@ -1,5 +1,3 @@
-from src.chat.heart_flow.observation.chatting_observation import ChattingObservation
-from src.chat.heart_flow.observation.structure_observation import StructureObservation
 from src.llm_models.utils_model import LLMRequest
 from src.config.config import global_config
 from src.common.logger import get_logger
@@ -48,9 +46,12 @@ def init_prompt():
     # --- Group Chat Prompt ---
     memory_activator_prompt = """
     你是一个记忆分析器，你需要根据以下信息来进行回忆
-    以下是一场聊天中的信息，请根据这些信息，总结出几个关键词作为记忆回忆的触发词
+    以下是一段聊天记录，请根据这些信息，总结出几个关键词作为记忆回忆的触发词
     
+    聊天记录:
     {obs_info_text}
+    你想要回复的消息:
+    {target_message}
     
     历史关键词（请避免重复提取这些关键词）：
     {cached_keywords}
@@ -71,12 +72,12 @@ class MemoryActivator:
         self.summary_model = LLMRequest(
             model=global_config.model.memory_summary,
             temperature=0.7,
-            request_type="focus.memory_activator",
+            request_type="memory_activator",
         )
         self.running_memory = []
         self.cached_keywords = set()  # 用于缓存历史关键词
 
-    async def activate_memory(self, observations) -> List[Dict]:
+    async def activate_memory_with_chat_history(self, target_message, chat_history_prompt) -> List[Dict]:
         """
         激活记忆
 
@@ -90,23 +91,13 @@ class MemoryActivator:
         if not global_config.memory.enable_memory:
             return []
 
-        obs_info_text = ""
-        for observation in observations:
-            if isinstance(observation, ChattingObservation):
-                obs_info_text += observation.talking_message_str_truncate_short
-            elif isinstance(observation, StructureObservation):
-                working_info = observation.get_observe_info()
-                for working_info_item in working_info:
-                    obs_info_text += f"{working_info_item['type']}: {working_info_item['content']}\n"
-
-        # logger.info(f"回忆待检索内容：obs_info_text: {obs_info_text}")
-
         # 将缓存的关键词转换为字符串，用于prompt
         cached_keywords_str = ", ".join(self.cached_keywords) if self.cached_keywords else "暂无历史关键词"
 
         prompt = await global_prompt_manager.format_prompt(
             "memory_activator_prompt",
-            obs_info_text=obs_info_text,
+            obs_info_text=chat_history_prompt,
+            target_message=target_message,
             cached_keywords=cached_keywords_str,
         )
 
@@ -132,9 +123,6 @@ class MemoryActivator:
         related_memory = await hippocampus_manager.get_memory_from_topic(
             valid_keywords=keywords, max_memory_num=3, max_memory_length=2, max_depth=3
         )
-        # related_memory = await hippocampus_manager.get_memory_from_text(
-        #     text=obs_info_text, max_memory_num=5, max_memory_length=2, max_depth=3, fast_retrieval=False
-        # )
 
         logger.info(f"获取到的记忆: {related_memory}")
 

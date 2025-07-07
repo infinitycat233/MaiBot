@@ -44,7 +44,9 @@
 
 ## 🔥 更新和安装
 
-**最新版本: v0.7.0** ([更新日志](changelogs/changelog.md))
+
+**最新版本: v0.8.1** ([更新日志](changelogs/changelog.md))
+
 可前往 [Release](https://github.com/MaiM-with-u/MaiBot/releases/) 页面下载最新版本
 可前往 [启动器发布页面](https://github.com/MaiM-with-u/mailauncher/releases/tag/v0.1.0)下载最新启动器
 **GitHub 分支说明：**
@@ -53,7 +55,7 @@
 - `classical`: 旧版本(停止维护)
 
 ### 最新版本部署教程
-- [从0.6升级须知](https://docs.mai-mai.org/faq/maibot/update_to_07.html)
+- [从0.6/0.7升级须知](https://docs.mai-mai.org/faq/maibot/update_to_07.html)
 - [🚀 最新版本部署教程](https://docs.mai-mai.org/manual/deployment/mmc_deploy_windows.html) - 基于 MaiCore 的新版本部署方式(与旧版本不兼容)
 
 > [!WARNING]
@@ -67,10 +69,10 @@
 ## 💬 讨论
 
 - [四群](https://qm.qq.com/q/wGePTl1UyY) |
-  [一群](https://qm.qq.com/q/VQ3XZrWgMs)(已满) | 
-  [二群](https://qm.qq.com/q/RzmCiRtHEW)(已满) | 
-  [五群](https://qm.qq.com/q/JxvHZnxyec)(已满) | 
-  [三群](https://qm.qq.com/q/wlH5eT8OmQ)(已满)
+  [一群](https://qm.qq.com/q/VQ3XZrWgMs) | 
+  [二群](https://qm.qq.com/q/RzmCiRtHEW) | 
+  [五群](https://qm.qq.com/q/JxvHZnxyec) | 
+  [三群](https://qm.qq.com/q/wlH5eT8OmQ)
 
 ## 📚 文档
 

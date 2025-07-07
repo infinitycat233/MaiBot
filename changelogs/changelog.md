@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.8.1] - 2025-7-5
+
+功能更新:
+
+- normal现在和focus一样支持tool
+- focus现在和normal一样每次调用lpmm
+- 移除人格表达
+
+优化和修复：
+
+- 修复表情包配置无效问题
+- 合并normal和focus的prompt构建
+- 非TTY环境禁用console_input_loop
+- 修复过滤消息仍被存储至数据库的问题
+- 私聊强制开启focus模式
+- 支持解析reply_to和at
+- 修复focus冷却时间导致的固定沉默
+- 移除豆包画图插件，此插件现在插件广场提供
+- 修复表达器无法读取原始文本
+- 修复normal planner没有超时退出问题
+
 ## [0.8.0] - 2025-6-27
 
 MaiBot 0.8.0 现已推出！

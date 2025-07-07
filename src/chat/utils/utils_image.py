@@ -403,7 +403,16 @@ class ImageManager:
                     or existing_image.vlm_processed is None
                 ):
                     logger.debug(f"图片记录缺少必要字段，补全旧记录: {image_hash}")
-                    image_id = str(uuid.uuid4())
+                    if not existing_image.image_id:
+                        existing_image.image_id = str(uuid.uuid4())
+                    if existing_image.count is None:
+                        existing_image.count = 0
+                    if existing_image.vlm_processed is None:
+                        existing_image.vlm_processed = False
+
+                    existing_image.count += 1
+                    existing_image.save()
+                    return existing_image.image_id, f"[picid:{existing_image.image_id}]"
                 else:
                     # print(f"图片已存在: {existing_image.image_id}")
                     # print(f"图片描述: {existing_image.description}")

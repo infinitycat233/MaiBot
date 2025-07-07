@@ -9,7 +9,6 @@ from src.common.message.api import get_global_api
 from .message import MessageSending, MessageThinking, MessageSet
 
 from src.chat.message_receive.storage import MessageStorage
-from ...config.config import global_config
 from ..utils.utils import truncate_message, calculate_typing_time, count_messages_between
 
 from src.common.logger import get_logger
@@ -192,20 +191,6 @@ class MessageManager:
         container = await self.get_container(chat_stream.stream_id)
         container.add_message(message)
 
-    def check_if_sending_message_exist(self, chat_id, thinking_id):
-        """检查指定聊天流的容器中是否存在具有特定 thinking_id 的 MessageSending 消息 或 emoji 消息"""
-        # 这个方法现在是非异步的，因为它只读取数据
-        container = self.containers.get(chat_id)  # 直接 get，因为读取不需要锁
-        if container and container.has_messages():
-            for message in container.get_all_messages():
-                if isinstance(message, MessageSending):
-                    msg_id = getattr(message.message_info, "message_id", None)
-                    # 检查 message_id 是否匹配 thinking_id 或以 "me" 开头 (emoji)
-                    if msg_id == thinking_id or (msg_id and msg_id.startswith("me")):
-                        # logger.debug(f"检查到存在相同thinking_id或emoji的消息: {msg_id} for {thinking_id}")
-                        return True
-        return False
-
     async def _handle_sending_message(self, container: MessageContainer, message: MessageSending):
         """处理单个 MessageSending 消息 (包含 set_reply 逻辑)"""
         try:
@@ -216,12 +201,7 @@ class MessageManager:
             thinking_messages_count, thinking_messages_length = count_messages_between(
                 start_time=thinking_start_time, end_time=now_time, stream_id=message.chat_stream.stream_id
             )
-            # print(f"message.reply:{message.reply}")
 
-            # --- 条件应用 set_reply 逻辑 ---
-            # logger.debug(
-            #     f"[message.apply_set_reply_logic:{message.apply_set_reply_logic},message.is_head:{message.is_head},thinking_messages_count:{thinking_messages_count},thinking_messages_length:{thinking_messages_length},message.is_private_message():{message.is_private_message()}]"
-            # )
             if (
                 message.is_head
                 and (thinking_messages_count > 3 or thinking_messages_length > 200)
@@ -277,14 +257,6 @@ class MessageManager:
                         flush=True,
                     )
 
-                # 检查是否超时
-                if thinking_time > global_config.normal_chat.thinking_timeout:
-                    logger.warning(
-                        f"[{chat_id}] 消息思考超时 ({thinking_time:.1f}秒)，移除消息 {message_earliest.message_info.message_id}"
-                    )
-                    container.remove_message(message_earliest)
-                    print()  # 超时后换行，避免覆盖下一条日志
-
             elif isinstance(message_earliest, MessageSending):
                 # --- 处理发送消息 ---
                 await self._handle_sending_message(container, message_earliest)
@@ -300,12 +272,6 @@ class MessageManager:
                         continue
                     logger.info(f"[{chat_id}] 处理超时发送消息: {msg.message_info.message_id}")
                     await self._handle_sending_message(container, msg)  # 复用处理逻辑
-
-        # 清理空容器 (可选)
-        # async with self._container_lock:
-        #     if not container.has_messages() and chat_id in self.containers:
-        #         logger.debug(f"[{chat_id}] 容器已空，准备移除。")
-        #         del self.containers[chat_id]
 
     async def _start_processor_loop(self):
         """消息处理器主循环"""

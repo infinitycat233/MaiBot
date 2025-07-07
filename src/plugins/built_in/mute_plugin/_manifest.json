@@ -10,7 +10,7 @@
   "license": "GPL-v3.0-or-later",
   "host_application": {
     "min_version": "0.8.0",
-    "max_version": "0.8.0"
+    "max_version": "0.8.10"
   },
   "keywords": ["mute", "ban", "moderation", "admin", "management", "group"],
   "categories": ["Moderation", "Group Management", "Admin Tools"],

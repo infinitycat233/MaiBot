@@ -1,11 +1,9 @@
 from typing import Optional
-import asyncio
 import ast
 
 from src.llm_models.utils_model import LLMRequest
 from .personality import Personality
 from .identity import Identity
-from .expression_style import PersonalityExpression
 import random
 import json
 import os
@@ -27,7 +25,6 @@ class Individuality:
         # 正常初始化实例属性
         self.personality: Optional[Personality] = None
         self.identity: Optional[Identity] = None
-        self.express_style: PersonalityExpression = PersonalityExpression()
 
         self.name = ""
         self.bot_person_id = ""
@@ -150,8 +147,6 @@ class Individuality:
             logger.info("已将人设构建")
         else:
             logger.error("人设构建失败")
-
-        asyncio.create_task(self.express_style.extract_and_store_personality_expressions())
 
     def to_dict(self) -> dict:
         """将个体特征转换为字典格式"""

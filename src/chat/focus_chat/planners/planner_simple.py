@@ -236,14 +236,6 @@ class ActionPlanner(BasePlanner):
 
                     action_data["loop_start_time"] = loop_start_time
 
-                    memory_str = ""
-                    if running_memorys:
-                        memory_str = "以下是当前在聊天中，你回忆起的记忆：\n"
-                        for running_memory in running_memorys:
-                            memory_str += f"{running_memory['content']}\n"
-                    if memory_str:
-                        action_data["memory_block"] = memory_str
-
                     # 对于reply动作不需要额外处理，因为相关字段已经在上面的循环中添加到action_data
 
                     if extracted_action not in current_available_actions:

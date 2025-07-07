@@ -1,4 +1,5 @@
 import traceback
+import os
 from typing import Dict, Any
 
 from src.common.logger import get_logger
@@ -13,11 +14,63 @@ from src.chat.utils.prompt_builder import Prompt, global_prompt_manager
 from src.config.config import global_config
 from src.plugin_system.core.component_registry import component_registry  # 导入新插件系统
 from src.plugin_system.base.base_command import BaseCommand
+from src.mais4u.mais4u_chat.s4u_msg_processor import S4UMessageProcessor
+from maim_message import UserInfo
+from src.chat.message_receive.chat_stream import ChatStream
+import re
 # 定义日志配置
 
+# 获取项目根目录（假设本文件在src/chat/message_receive/下，根目录为上上上级目录）
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
+
+ENABLE_S4U_CHAT = os.path.isfile(os.path.join(PROJECT_ROOT, "s4u.s4u"))
+
+if ENABLE_S4U_CHAT:
+    print("""\nS4U私聊模式已开启\n!!!!!!!!!!!!!!!!!\n""")
+    # 仅内部开启
 
 # 配置主程序日志格式
 logger = get_logger("chat")
+
+
+def _check_ban_words(text: str, chat: ChatStream, userinfo: UserInfo) -> bool:
+    """检查消息是否包含过滤词
+
+    Args:
+        text: 待检查的文本
+        chat: 聊天对象
+        userinfo: 用户信息
+
+    Returns:
+        bool: 是否包含过滤词
+    """
+    for word in global_config.message_receive.ban_words:
+        if word in text:
+            chat_name = chat.group_info.group_name if chat.group_info else "私聊"
+            logger.info(f"[{chat_name}]{userinfo.user_nickname}:{text}")
+            logger.info(f"[过滤词识别]消息中含有{word}，filtered")
+            return True
+    return False
+
+
+def _check_ban_regex(text: str, chat: ChatStream, userinfo: UserInfo) -> bool:
+    """检查消息是否匹配过滤正则表达式
+
+    Args:
+        text: 待检查的文本
+        chat: 聊天对象
+        userinfo: 用户信息
+
+    Returns:
+        bool: 是否匹配过滤正则
+    """
+    for pattern in global_config.message_receive.ban_msgs_regex:
+        if re.search(pattern, text):
+            chat_name = chat.group_info.group_name if chat.group_info else "私聊"
+            logger.info(f"[{chat_name}]{userinfo.user_nickname}:{text}")
+            logger.info(f"[正则表达式过滤]消息匹配到{pattern}，filtered")
+            return True
+    return False
 
 
 class ChatBot:
@@ -30,6 +83,7 @@ class ChatBot:
         # 创建初始化PFC管理器的任务，会在_ensure_started时执行
         self.only_process_chat = MessageProcessor()
         self.pfc_manager = PFCManager.get_instance()
+        self.s4u_message_processor = S4UMessageProcessor()
 
     async def _ensure_started(self):
         """确保所有任务已启动"""
@@ -37,17 +91,6 @@ class ChatBot:
             logger.debug("确保ChatBot所有任务已启动")
 
             self._started = True
-
-    async def _create_pfc_chat(self, message: MessageRecv):
-        try:
-            if global_config.experimental.pfc_chatting:
-                chat_id = str(message.chat_stream.stream_id)
-                private_name = str(message.message_info.user_info.user_nickname)
-
-                await self.pfc_manager.get_or_create_conversation(chat_id, private_name)
-
-        except Exception as e:
-            logger.error(f"创建PFC聊天失败: {e}")
 
     async def _process_commands_with_new_system(self, message: MessageRecv):
         # sourcery skip: use-named-expression
@@ -131,15 +174,27 @@ class ChatBot:
             message = MessageRecv(message_data)
             group_info = message.message_info.group_info
             user_info = message.message_info.user_info
+            if message.message_info.additional_config:
+                sent_message = message.message_info.additional_config.get("echo", False)
+                if sent_message:  # 这一段只是为了在一切处理前劫持上报的自身消息，用于更新message_id，需要ada支持上报事件，实际测试中不会对正常使用造成任何问题
+                    await MessageStorage.update_message(message)
+                    return
+
             get_chat_manager().register_message(message)
 
-            # 创建聊天流
             chat = await get_chat_manager().get_or_create_stream(
                 platform=message.message_info.platform,
                 user_info=user_info,
                 group_info=group_info,
             )
+
             message.update_chat_stream(chat)
+
+            # 过滤检查
+            if _check_ban_words(message.processed_plain_text, chat, user_info) or _check_ban_regex(
+                message.raw_message, chat, user_info
+            ):
+                return
 
             # 处理消息内容，生成纯文本
             await message.process()
@@ -166,24 +221,12 @@ class ChatBot:
                 template_group_name = None
 
             async def preprocess():
-                logger.debug("开始预处理消息...")
-                # 如果在私聊中
-                if group_info is None:
-                    logger.debug("检测到私聊消息")
-                    if global_config.experimental.pfc_chatting:
-                        logger.debug("进入PFC私聊处理流程")
-                        # 创建聊天流
-                        logger.debug(f"为{user_info.user_id}创建/获取聊天流")
-                        await self.only_process_chat.process_message(message)
-                        await self._create_pfc_chat(message)
-                    # 禁止PFC，进入普通的心流消息处理逻辑
-                    else:
-                        logger.debug("进入普通心流私聊处理")
-                        await self.heartflow_message_receiver.process_message(message)
-                # 群聊默认进入心流消息处理逻辑
-                else:
-                    logger.debug(f"检测到群聊消息，群ID: {group_info.group_id}")
-                    await self.heartflow_message_receiver.process_message(message)
+                if ENABLE_S4U_CHAT:
+                    logger.info("进入S4U流程")
+                    await self.s4u_message_processor.process_message(message)
+                    return
+
+                await self.heartflow_message_receiver.process_message(message)
 
             if template_group_name:
                 async with global_prompt_manager.async_message_scope(template_group_name):

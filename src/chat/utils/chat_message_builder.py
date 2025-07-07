@@ -174,6 +174,7 @@ def _build_readable_messages_internal(
     truncate: bool = False,
     pic_id_mapping: Dict[str, str] = None,
     pic_counter: int = 1,
+    show_pic: bool = True,
 ) -> Tuple[str, List[Tuple[float, str, str]], Dict[str, str], int]:
     """
     内部辅助函数，构建可读消息字符串和原始消息详情列表。
@@ -260,7 +261,8 @@ def _build_readable_messages_internal(
             content = content.replace("ⁿ", "")
 
         # 处理图片ID
-        content = process_pic_ids(content)
+        if show_pic:
+            content = process_pic_ids(content)
 
         # 检查必要信息是否存在
         if not all([platform, user_id, timestamp is not None]):
@@ -532,6 +534,7 @@ def build_readable_messages(
     read_mark: float = 0.0,
     truncate: bool = False,
     show_actions: bool = False,
+    show_pic: bool = True,
 ) -> str:
     """
     将消息列表转换为可读的文本格式。
@@ -601,7 +604,7 @@ def build_readable_messages(
     if read_mark <= 0:
         # 没有有效的 read_mark，直接格式化所有消息
         formatted_string, _, pic_id_mapping, _ = _build_readable_messages_internal(
-            copy_messages, replace_bot_name, merge_messages, timestamp_mode, truncate
+            copy_messages, replace_bot_name, merge_messages, timestamp_mode, truncate, show_pic=show_pic
         )
 
         # 生成图片映射信息并添加到最前面
@@ -628,9 +631,17 @@ def build_readable_messages(
             truncate,
             pic_id_mapping,
             pic_counter,
+            show_pic=show_pic,
         )
         formatted_after, _, pic_id_mapping, _ = _build_readable_messages_internal(
-            messages_after_mark, replace_bot_name, merge_messages, timestamp_mode, False, pic_id_mapping, pic_counter
+            messages_after_mark,
+            replace_bot_name,
+            merge_messages,
+            timestamp_mode,
+            False,
+            pic_id_mapping,
+            pic_counter,
+            show_pic=show_pic,
         )
 
         read_mark_line = "\n--- 以上消息是你已经看过，请关注以下未读的新消息---\n"

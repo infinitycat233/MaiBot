@@ -72,7 +72,7 @@ class NormalChatPlanner:
 
         self.action_manager = action_manager
 
-    async def plan(self, message: MessageThinking, sender_name: str = "某人") -> Dict[str, Any]:
+    async def plan(self, message: MessageThinking) -> Dict[str, Any]:
         """
         Normal Chat 规划器: 使用LLM根据上下文决定做出什么动作。
 
@@ -122,7 +122,7 @@ class NormalChatPlanner:
             message_list_before_now = get_raw_msg_before_timestamp_with_chat(
                 chat_id=message.chat_stream.stream_id,
                 timestamp=time.time(),
-                limit=global_config.focus_chat.observation_context_size,
+                limit=global_config.chat.max_context_size,
             )
 
             chat_context = build_readable_messages(

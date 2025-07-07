@@ -1,4 +1,4 @@
-from src.tools.tool_can_use.base_tool import BaseTool, register_tool
+from src.tools.tool_can_use.base_tool import BaseTool
 from src.person_info.person_info import get_person_info_manager
 from src.common.logger import get_logger
 import time
@@ -102,7 +102,3 @@ class RenamePersonTool(BaseTool):
             error_msg = f"重命名失败: {str(e)}"
             logger.error(error_msg, exc_info=True)
             return {"type": "info_error", "id": f"rename_error_{time.time()}", "content": error_msg}
-
-
-# 注册工具
-register_tool(RenamePersonTool)

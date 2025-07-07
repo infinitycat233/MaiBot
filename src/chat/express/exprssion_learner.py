@@ -74,16 +74,13 @@ class ExpressionLearner:
         )
         self.llm_model = None
 
-    def get_expression_by_chat_id(
-        self, chat_id: str
-    ) -> Tuple[List[Dict[str, str]], List[Dict[str, str]], List[Dict[str, str]]]:
+    def get_expression_by_chat_id(self, chat_id: str) -> Tuple[List[Dict[str, str]], List[Dict[str, str]]]:
         """
-        获取指定chat_id的style和grammar表达方式, 同时获取全局的personality表达方式
+        获取指定chat_id的style和grammar表达方式
         返回的每个表达方式字典中都包含了source_id, 用于后续的更新操作
         """
         learnt_style_expressions = []
         learnt_grammar_expressions = []
-        personality_expressions = []
 
         # 获取style表达方式
         style_dir = os.path.join("data", "expression", "learnt_style", str(chat_id))
@@ -111,19 +108,7 @@ class ExpressionLearner:
             except Exception as e:
                 logger.error(f"读取grammar表达方式失败: {e}")
 
-        # 获取personality表达方式
-        personality_file = os.path.join("data", "expression", "personality", "expressions.json")
-        if os.path.exists(personality_file):
-            try:
-                with open(personality_file, "r", encoding="utf-8") as f:
-                    expressions = json.load(f)
-                    for expr in expressions:
-                        expr["source_id"] = "personality"  # 添加来源ID
-                        personality_expressions.append(expr)
-            except Exception as e:
-                logger.error(f"读取personality表达方式失败: {e}")
-
-        return learnt_style_expressions, learnt_grammar_expressions, personality_expressions
+        return learnt_style_expressions, learnt_grammar_expressions
 
     def is_similar(self, s1: str, s2: str) -> bool:
         """
@@ -427,6 +412,7 @@ class ExpressionLearner:
 
 
 init_prompt()
+
 
 expression_learner = None
 

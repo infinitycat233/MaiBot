@@ -108,6 +108,9 @@ class MessageRecv(Message):
         self.detailed_plain_text = message_dict.get("detailed_plain_text", "")
         self.is_emoji = False
         self.is_picid = False
+        self.is_mentioned = 0.0
+        self.priority_mode = "interest"
+        self.priority_info = None
 
     def update_chat_stream(self, chat_stream: "ChatStream"):
         self.chat_stream = chat_stream
@@ -146,8 +149,27 @@ class MessageRecv(Message):
                 if isinstance(segment.data, str):
                     return await get_image_manager().get_emoji_description(segment.data)
                 return "[发了一个表情包，网卡了加载不出来]"
+            elif segment.type == "mention_bot":
+                self.is_mentioned = float(segment.data)
+                return ""
+            elif segment.type == "set_priority_mode":
+                # 处理设置优先级模式的消息段
+                if isinstance(segment.data, str):
+                    self.priority_mode = segment.data
+                return ""
+            elif segment.type == "priority_info":
+                if isinstance(segment.data, dict):
+                    # 处理优先级信息
+                    self.priority_info = segment.data
+                    """
+                    {
+                        'message_type': 'vip', # vip or normal
+                        'message_priority': 1.0, # 优先级，大为优先，float
+                    }
+                    """
+                return ""
             else:
-                return f"[{segment.type}:{str(segment.data)}]"
+                return ""
         except Exception as e:
             logger.error(f"处理消息段失败: {str(e)}, 类型: {segment.type}, 数据: {segment.data}")
             return f"[处理失败的{segment.type}消息]"
@@ -283,6 +305,7 @@ class MessageSending(MessageProcessBase):
         is_emoji: bool = False,
         thinking_start_time: float = 0,
         apply_set_reply_logic: bool = False,
+        reply_to: str = None,
     ):
         # 调用父类初始化
         super().__init__(
@@ -300,6 +323,8 @@ class MessageSending(MessageProcessBase):
         self.is_head = is_head
         self.is_emoji = is_emoji
         self.apply_set_reply_logic = apply_set_reply_logic
+
+        self.reply_to = reply_to
 
         # 用于显示发送内容与显示不一致的情况
         self.display_message = display_message

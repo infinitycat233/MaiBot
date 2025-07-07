@@ -80,7 +80,7 @@ class NormalChatActionModifier:
                 message_list_before_now = get_raw_msg_before_timestamp_with_chat(
                     chat_id=chat_stream.stream_id,
                     timestamp=time.time(),
-                    limit=global_config.focus_chat.observation_context_size,  # 使用相同的配置
+                    limit=global_config.chat.max_context_size,  # 使用相同的配置
                 )
 
                 # 构建可读的聊天上下文

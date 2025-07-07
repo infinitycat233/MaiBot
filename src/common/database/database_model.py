@@ -127,6 +127,8 @@ class Messages(BaseModel):
 
     chat_id = TextField(index=True)  # 对应的 ChatStreams stream_id
 
+    reply_to = TextField(null=True)
+
     # 从 chat_info 扁平化而来的字段
     chat_info_stream_id = TextField()
     chat_info_platform = TextField()

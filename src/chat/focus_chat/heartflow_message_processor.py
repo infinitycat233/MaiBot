@@ -3,16 +3,14 @@ from src.config.config import global_config
 from src.chat.message_receive.message import MessageRecv
 from src.chat.message_receive.storage import MessageStorage
 from src.chat.heart_flow.heartflow import heartflow
-from src.chat.message_receive.chat_stream import get_chat_manager, ChatStream
+from src.chat.message_receive.chat_stream import get_chat_manager
 from src.chat.utils.utils import is_mentioned_bot_in_message
 from src.chat.utils.timer_calculator import Timer
 from src.common.logger import get_logger
-
-import math
 import re
+import math
 import traceback
 from typing import Optional, Tuple
-from maim_message import UserInfo
 
 from src.person_info.relationship_manager import get_relationship_manager
 
@@ -90,46 +88,6 @@ async def _calculate_interest(message: MessageRecv) -> Tuple[float, bool]:
     return interested_rate, is_mentioned
 
 
-def _check_ban_words(text: str, chat: ChatStream, userinfo: UserInfo) -> bool:
-    """检查消息是否包含过滤词
-
-    Args:
-        text: 待检查的文本
-        chat: 聊天对象
-        userinfo: 用户信息
-
-    Returns:
-        bool: 是否包含过滤词
-    """
-    for word in global_config.message_receive.ban_words:
-        if word in text:
-            chat_name = chat.group_info.group_name if chat.group_info else "私聊"
-            logger.info(f"[{chat_name}]{userinfo.user_nickname}:{text}")
-            logger.info(f"[过滤词识别]消息中含有{word}，filtered")
-            return True
-    return False
-
-
-def _check_ban_regex(text: str, chat: ChatStream, userinfo: UserInfo) -> bool:
-    """检查消息是否匹配过滤正则表达式
-
-    Args:
-        text: 待检查的文本
-        chat: 聊天对象
-        userinfo: 用户信息
-
-    Returns:
-        bool: 是否匹配过滤正则
-    """
-    for pattern in global_config.message_receive.ban_msgs_regex:
-        if re.search(pattern, text):
-            chat_name = chat.group_info.group_name if chat.group_info else "私聊"
-            logger.info(f"[{chat_name}]{userinfo.user_nickname}:{text}")
-            logger.info(f"[正则表达式过滤]消息匹配到{pattern}，filtered")
-            return True
-    return False
-
-
 class HeartFCMessageReceiver:
     """心流处理器，负责处理接收到的消息并计算兴趣度"""
 
@@ -167,12 +125,6 @@ class HeartFCMessageReceiver:
             subheartflow = await heartflow.get_or_create_subheartflow(chat.stream_id)
             message.update_chat_stream(chat)
 
-            # 3. 过滤检查
-            if _check_ban_words(message.processed_plain_text, chat, userinfo) or _check_ban_regex(
-                message.raw_message, chat, userinfo
-            ):
-                return
-
             # 6. 兴趣度计算与更新
             interested_rate, is_mentioned = await _calculate_interest(message)
             subheartflow.add_message_to_normal_chat_cache(message, interested_rate, is_mentioned)
@@ -183,7 +135,6 @@ class HeartFCMessageReceiver:
             current_talk_frequency = global_config.chat.get_current_talk_frequency(chat.stream_id)
 
             # 如果消息中包含图片标识，则日志展示为图片
-            import re
 
             picid_match = re.search(r"\[picid:([^\]]+)\]", message.processed_plain_text)
             if picid_match:

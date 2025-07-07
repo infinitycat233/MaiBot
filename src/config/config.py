@@ -30,11 +30,11 @@ from src.config.official_configs import (
     TelemetryConfig,
     ExperimentalConfig,
     ModelConfig,
-    FocusChatProcessorConfig,
     MessageReceiveConfig,
     MaimMessageConfig,
     LPMMKnowledgeConfig,
     RelationshipConfig,
+    ToolConfig,
 )
 
 install(extra_lines=3)
@@ -50,7 +50,7 @@ TEMPLATE_DIR = os.path.join(PROJECT_ROOT, "template")
 
 # 考虑到，实际上配置文件中的mai_version是不会自动更新的,所以采用硬编码
 # 对该字段的更新，请严格参照语义化版本规范：https://semver.org/lang/zh-CN/
-MMC_VERSION = "0.8.0"
+MMC_VERSION = "0.8.1"
 
 
 def update_config():
@@ -151,7 +151,6 @@ class Config(ConfigBase):
     message_receive: MessageReceiveConfig
     normal_chat: NormalChatConfig
     focus_chat: FocusChatConfig
-    focus_chat_processor: FocusChatProcessorConfig
     emoji: EmojiConfig
     expression: ExpressionConfig
     memory: MemoryConfig
@@ -165,6 +164,7 @@ class Config(ConfigBase):
     model: ModelConfig
     maim_message: MaimMessageConfig
     lpmm_knowledge: LPMMKnowledgeConfig
+    tool: ToolConfig
 
 
 def load_config(config_path: str) -> Config:

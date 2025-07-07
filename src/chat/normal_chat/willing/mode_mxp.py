@@ -19,7 +19,6 @@ Mxp 模式：梦溪畔独家赞助
 下下策是询问一个菜鸟（@梦溪畔）
 """
 
-from src.config.config import global_config
 from .willing_manager import BaseWillingManager
 from typing import Dict
 import asyncio
@@ -173,21 +172,9 @@ class MxpWillingManager(BaseWillingManager):
 
             probability = self._willing_to_probability(current_willing)
 
-            if w_info.is_emoji:
-                probability *= global_config.normal_chat.emoji_response_penalty
-
-            if w_info.is_picid:
-                probability = 0  # picid格式消息直接不回复
-
             self.temporary_willing = current_willing
 
             return probability
-
-    async def bombing_buffer_message_handle(self, message_id: str):
-        """炸飞消息处理"""
-        async with self.lock:
-            w_info = self.ongoing_messages[message_id]
-            self.chat_person_reply_willing[w_info.chat_id][w_info.person_id] += 0.1
 
     async def _return_to_basic_willing(self):
         """使每个人的意愿恢复到chat基础意愿"""

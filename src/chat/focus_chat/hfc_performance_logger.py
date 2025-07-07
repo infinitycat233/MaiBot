@@ -42,7 +42,6 @@ class HFCPerformanceLogger:
                 "total_time": cycle_data.get("total_time", 0),
                 "step_times": cycle_data.get("step_times", {}),
                 "processor_time_costs": cycle_data.get("processor_time_costs", {}),  # 前处理器时间
-                "post_processor_time_costs": cycle_data.get("post_processor_time_costs", {}),  # 后处理器时间
                 "reasoning": cycle_data.get("reasoning", ""),
                 "success": cycle_data.get("success", False),
             }
@@ -59,13 +58,6 @@ class HFCPerformanceLogger:
                 f"action={record['action_type']}",
                 f"time={record['total_time']:.2f}s",
             ]
-
-            # 添加后处理器时间信息到日志
-            if record["post_processor_time_costs"]:
-                post_processor_stats = ", ".join(
-                    [f"{name}: {time_cost:.3f}s" for name, time_cost in record["post_processor_time_costs"].items()]
-                )
-                log_parts.append(f"post_processors=({post_processor_stats})")
 
             logger.debug(f"记录HFC循环数据: {', '.join(log_parts)}")
 

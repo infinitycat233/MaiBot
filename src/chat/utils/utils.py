@@ -321,7 +321,7 @@ def random_remove_punctuation(text: str) -> str:
     return result
 
 
-def process_llm_response(text: str) -> list[str]:
+def process_llm_response(text: str, enable_splitter: bool = True, enable_chinese_typo: bool = True) -> list[str]:
     if not global_config.response_post_process.enable_response_post_process:
         return [text]
 
@@ -359,14 +359,14 @@ def process_llm_response(text: str) -> list[str]:
         word_replace_rate=global_config.chinese_typo.word_replace_rate,
     )
 
-    if global_config.response_splitter.enable:
+    if global_config.response_splitter.enable and enable_splitter:
         split_sentences = split_into_sentences_w_remove_punctuation(cleaned_text)
     else:
         split_sentences = [cleaned_text]
 
     sentences = []
     for sentence in split_sentences:
-        if global_config.chinese_typo.enable:
+        if global_config.chinese_typo.enable and enable_chinese_typo:
             typoed_text, typo_corrections = typo_generator.create_typo_sentence(sentence)
             sentences.append(typoed_text)
             if typo_corrections:

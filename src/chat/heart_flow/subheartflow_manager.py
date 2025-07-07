@@ -91,15 +91,9 @@ class SubHeartflowManager:
                 return subflow
 
             try:
-                # 初始化子心流, 传入 mai_state_info
                 new_subflow = SubHeartflow(
                     subheartflow_id,
                 )
-
-                # 首先创建并添加聊天观察者
-                # observation = ChattingObservation(chat_id=subheartflow_id)
-                # await observation.initialize()
-                # new_subflow.add_observation(observation)
 
                 # 然后再进行异步初始化，此时 SubHeartflow 内部若需启动 HeartFChatting，就能拿到 observation
                 await new_subflow.initialize()

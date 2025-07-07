@@ -22,6 +22,7 @@
 import traceback
 import time
 import difflib
+import re
 from typing import Optional, Union
 from src.common.logger import get_logger
 
@@ -171,7 +172,41 @@ async def _find_reply_message(target_stream, reply_to: str) -> Optional[MessageR
             person_id = get_person_info_manager().get_person_id(platform, user_id)
             person_name = await get_person_info_manager().get_value(person_id, "person_name")
             if person_name == sender:
-                similarity = difflib.SequenceMatcher(None, text, message["processed_plain_text"]).ratio()
+                translate_text = message["processed_plain_text"]
+
+                # 检查是否有 回复<aaa:bbb> 字段
+                reply_pattern = r"回复<([^:<>]+):([^:<>]+)>"
+                match = re.search(reply_pattern, translate_text)
+                if match:
+                    aaa = match.group(1)
+                    bbb = match.group(2)
+                    reply_person_id = get_person_info_manager().get_person_id(platform, bbb)
+                    reply_person_name = await get_person_info_manager().get_value(reply_person_id, "person_name")
+                    if not reply_person_name:
+                        reply_person_name = aaa
+                    # 在内容前加上回复信息
+                    translate_text = re.sub(reply_pattern, f"回复 {reply_person_name}", translate_text, count=1)
+
+                # 检查是否有 @<aaa:bbb> 字段
+                at_pattern = r"@<([^:<>]+):([^:<>]+)>"
+                at_matches = list(re.finditer(at_pattern, translate_text))
+                if at_matches:
+                    new_content = ""
+                    last_end = 0
+                    for m in at_matches:
+                        new_content += translate_text[last_end : m.start()]
+                        aaa = m.group(1)
+                        bbb = m.group(2)
+                        at_person_id = get_person_info_manager().get_person_id(platform, bbb)
+                        at_person_name = await get_person_info_manager().get_value(at_person_id, "person_name")
+                        if not at_person_name:
+                            at_person_name = aaa
+                        new_content += f"@{at_person_name}"
+                        last_end = m.end()
+                    new_content += translate_text[last_end:]
+                    translate_text = new_content
+
+                similarity = difflib.SequenceMatcher(None, text, translate_text).ratio()
                 if similarity >= 0.9:
                     find_msg = message
                     break
