@@ -94,7 +94,7 @@ class ConfigBase:
                     raise TypeError(
                         f"Expected {len(field_type_args)} items for {field_type.__name__}, got {len(value)}"
                     )
-                return tuple(cls._convert_field(item, arg) for item, arg in zip(value, field_type_args))
+                return tuple(cls._convert_field(item, arg) for item, arg in zip(value, field_type_args, strict=False))
 
         if field_origin_type is dict:
             # 检查提供的value是否为dict

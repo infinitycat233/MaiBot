@@ -378,7 +378,7 @@ class ActionModifier:
                 task_results = await asyncio.gather(*tasks, return_exceptions=True)
 
                 # 处理结果并更新缓存
-                for _, (action_name, result) in enumerate(zip(task_names, task_results)):
+                for _, (action_name, result) in enumerate(zip(task_names, task_results, strict=False)):
                     if isinstance(result, Exception):
                         logger.error(f"{self.log_prefix}LLM判定action {action_name} 时出错: {result}")
                         results[action_name] = False

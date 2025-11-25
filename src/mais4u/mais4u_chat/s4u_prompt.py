@@ -252,7 +252,7 @@ def weighted_sample_no_replacement(items, weights, k) -> list:
         2. 不会重复选中同一个元素
     """
     selected = []
-    pool = list(zip(items, weights))
+    pool = list(zip(items, weights, strict=False))
     for _ in range(min(k, len(pool))):
         total = sum(w for _, w in pool)
         r = random.uniform(0, total)

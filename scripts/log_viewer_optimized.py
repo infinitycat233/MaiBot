@@ -354,7 +354,7 @@ class VirtualLogDisplay:
 
         # 为每个部分应用正确的标签
         current_len = 0
-        for part, tag_name in zip(parts, tags):
+        for part, tag_name in zip(parts, tags, strict=False):
             start_index = f"{start_pos}+{current_len}c"
             end_index = f"{start_pos}+{current_len + len(part)}c"
             self.text_widget.tag_add(tag_name, start_index, end_index)

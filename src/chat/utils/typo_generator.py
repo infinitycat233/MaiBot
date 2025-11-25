@@ -363,7 +363,7 @@ class ChineseTypoGenerator:
             else:
                 # 处理多字词的单字替换
                 word_result = []
-                for _, (char, py) in enumerate(zip(word, word_pinyin)):
+                for _, (char, py) in enumerate(zip(word, word_pinyin, strict=False)):
                     # 词中的字替换概率降低
                     word_error_rate = self.error_rate * (0.7 ** (len(word) - 1))
 

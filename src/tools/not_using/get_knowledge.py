@@ -54,7 +54,7 @@ class SearchKnowledgeTool(BaseTool):
     @staticmethod
     def _cosine_similarity(vec1: List[float], vec2: List[float]) -> float:
         """计算两个向量之间的余弦相似度"""
-        dot_product = sum(p * q for p, q in zip(vec1, vec2))
+        dot_product = sum(p * q for p, q in zip(vec1, vec2, strict=False))
         magnitude1 = math.sqrt(sum(p * p for p in vec1))
         magnitude2 = math.sqrt(sum(q * q for q in vec2))
         if magnitude1 == 0 or magnitude2 == 0:

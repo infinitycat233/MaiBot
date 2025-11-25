@@ -59,7 +59,7 @@ EMBEDDING_SIM_THRESHOLD = 0.99
 
 def cosine_similarity(a, b):
     # 计算余弦相似度
-    dot = sum(x * y for x, y in zip(a, b))
+    dot = sum(x * y for x, y in zip(a, b, strict=False))
     norm_a = math.sqrt(sum(x * x for x in a))
     norm_b = math.sqrt(sum(x * x for x in b))
     if norm_a == 0 or norm_b == 0:
@@ -285,7 +285,7 @@ class EmbeddingStore:
         distances = list(distances.flatten())
         result = [
             (self.idx2hash[str(int(idx))], float(sim))
-            for (idx, sim) in zip(indices, distances)
+            for (idx, sim) in zip(indices, distances, strict=False)
             if idx in range(len(self.idx2hash))
         ]
 

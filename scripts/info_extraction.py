@@ -174,7 +174,7 @@ def main():  # sourcery skip: comprehension-to-generator, extract-method
     with ThreadPoolExecutor(max_workers=workers) as executor:
         future_to_hash = {
             executor.submit(process_single_text, pg_hash, raw_data, llm_client_list): pg_hash
-            for pg_hash, raw_data in zip(all_sha256_list, all_raw_datas)
+            for pg_hash, raw_data in zip(all_sha256_list, all_raw_datas, strict=False)
         }
 
         with Progress(

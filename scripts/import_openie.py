@@ -58,7 +58,9 @@ def hash_deduplicate(
     # 保存去重后的三元组
     new_triple_list_data = {}
 
-    for _, (raw_paragraph, triple_list) in enumerate(zip(raw_paragraphs.values(), triple_list_data.values())):
+    for _, (raw_paragraph, triple_list) in enumerate(
+        zip(raw_paragraphs.values(), triple_list_data.values(), strict=False)
+    ):
         # 段落hash
         paragraph_hash = get_sha256(raw_paragraph)
         if f"{PG_NAMESPACE}-{paragraph_hash}" in stored_pg_hashes and paragraph_hash in stored_paragraph_hashes:

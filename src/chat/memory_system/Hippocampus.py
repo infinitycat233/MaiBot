@@ -819,7 +819,7 @@ class EntorhinalCortex:
         timestamps = sample_scheduler.get_timestamp_array()
         # 使用 translate_timestamp_to_human_readable 并指定 mode="normal"
         readable_timestamps = [translate_timestamp_to_human_readable(ts, mode="normal") for ts in timestamps]
-        for _, readable_timestamp in zip(timestamps, readable_timestamps):
+        for _, readable_timestamp in zip(timestamps, readable_timestamps, strict=False):
             logger.debug(f"回忆往事: {readable_timestamp}")
         chat_samples = []
         for timestamp in timestamps:
