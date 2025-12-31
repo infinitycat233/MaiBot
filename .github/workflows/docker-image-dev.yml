@@ -137,7 +137,7 @@ jobs:
           cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/maibot:dev-arm64-buildcache,mode=max
           outputs: |
             type=image,name=${{ secrets.DOCKERHUB_USERNAME }}/maibot,push-by-digest=true,name-canonical=true,push=true
-            type=image,name=swr.cn-north-4.myhuaweicloud.com/${{ secrets.SWR_ORGANIZATION }}/maibot,push-by-digest=true,name-canonical=true,push=true
+            type=image,name=swr.cn-east-3.myhuaweicloud.com/${{ secrets.SWR_ORGANIZATION }}/maibot,push-by-digest=true,name-canonical=true,push=true
           build-args: |
             BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
             VCS_REF=${{ github.sha }}
