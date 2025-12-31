@@ -35,6 +35,8 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          buildkitd-flags: --debug
 
       # Log in docker hub
       - name: Log in to Docker Hub
@@ -42,14 +44,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      # Log in to Huawei Cloud SWR
-      - name: Login to Huawei Cloud SWR
-        uses: huaweicloud/swr-login@v2.1.0
-        with:
-          region: cn-north-4
-          access-key-id: ${{ secrets.ACCESSKEY }}
-          access-key-secret: ${{ secrets.SECRETACCESSKEY }}
 
       # Generate metadata for Docker images
       - name: Docker meta
@@ -69,9 +63,7 @@ jobs:
           file: ./Dockerfile
           cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/maibot:dev-amd64-buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/maibot:dev-amd64-buildcache,mode=max
-          outputs: |
-            type=image,name=${{ secrets.DOCKERHUB_USERNAME }}/maibot,push-by-digest=true,name-canonical=true,push=true
-            type=image,name=swr.cn-north-4.myhuaweicloud.com/${{ secrets.SWR_ORGANIZATION }}/maibot,push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,name=${{ secrets.DOCKERHUB_USERNAME }}/maibot,push-by-digest=true,name-canonical=true,push=true
           build-args: |
             BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
             VCS_REF=${{ github.sha }}
@@ -97,6 +89,8 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          buildkitd-flags: --debug
 
       # Log in docker hub
       - name: Log in to Docker Hub
@@ -104,14 +98,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      # Log in to Huawei Cloud SWR
-      - name: Login to Huawei Cloud SWR
-        uses: huaweicloud/swr-login@v2.1.0
-        with:
-          region: cn-north-4
-          access-key-id: ${{ secrets.ACCESSKEY }}
-          access-key-secret: ${{ secrets.SECRETACCESSKEY }}
 
       # Generate metadata for Docker images
       - name: Docker meta
@@ -131,9 +117,7 @@ jobs:
           file: ./Dockerfile
           cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/maibot:dev-arm64-buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/maibot:dev-arm64-buildcache,mode=max
-          outputs: |
-            type=image,name=${{ secrets.DOCKERHUB_USERNAME }}/maibot,push-by-digest=true,name-canonical=true,push=true
-            type=image,name=swr.cn-east-3.myhuaweicloud.com/${{ secrets.SWR_ORGANIZATION }}/maibot,push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,name=${{ secrets.DOCKERHUB_USERNAME }}/maibot,push-by-digest=true,name-canonical=true,push=true
           build-args: |
             BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
             VCS_REF=${{ github.sha }}
@@ -173,42 +157,4 @@ jobs:
             docker buildx imagetools create -t $tag \
               ${{ secrets.DOCKERHUB_USERNAME }}/maibot@${{ needs.build-amd64.outputs.digest }} \
               ${{ secrets.DOCKERHUB_USERNAME }}/maibot@${{ needs.build-arm64.outputs.digest }}
-          done
-
-  create-manifest-swr:
-    name: Create Multi-Arch Manifest for Huawei Cloud SWR
-    runs-on: ubuntu-24.04
-    needs:
-      - build-amd64
-      - build-arm64
-    steps:
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      # Log in to Huawei Cloud SWR
-      - name: Login to Huawei Cloud SWR
-        uses: huaweicloud/swr-login@v2.1.0
-        with:
-          region: cn-east-3
-          access-key-id: ${{ secrets.ACCESSKEY }}
-          access-key-secret: ${{ secrets.SECRETACCESSKEY }}
-
-      # Generate metadata for Docker images
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: swr.cn-east-3.myhuaweicloud.com/${{ secrets.SWR_ORGANIZATION }}/maibot
-          tags: |
-            type=raw,value=dev
-            type=schedule,pattern=dev-{{date 'YYMMDD'}}
-
-      - name: Create and Push Manifest to SWR
-        run: |
-          # 为每个标签创建多架构镜像
-          for tag in $(echo "${{ steps.meta.outputs.tags }}" | tr '\n' ' '); do
-            echo "Creating manifest for $tag"
-            docker buildx imagetools create -t $tag \
-              swr.cn-east-3.myhuaweicloud.com/${{ secrets.SWR_ORGANIZATION }}/maibot@${{ needs.build-amd64.outputs.digest }} \
-              swr.cn-east-3.myhuaweicloud.com/${{ secrets.SWR_ORGANIZATION }}/maibot@${{ needs.build-arm64.outputs.digest }}
           done
