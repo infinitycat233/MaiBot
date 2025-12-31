@@ -36,6 +36,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
+          driver-opts: network=host
           buildkitd-flags: --debug
 
       # Log in docker hub
@@ -100,6 +101,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
+          driver-opts: network=host
           buildkitd-flags: --debug
 
       # Log in docker hub
