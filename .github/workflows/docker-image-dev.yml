@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       digest: ${{ steps.build.outputs.digest }}
+      digest-swr: ${{ steps.build-swr.outputs.digest }}
     steps:
       - name: Check out git repository
         uses: actions/checkout@v4
@@ -45,6 +46,14 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # Log in to Huawei Cloud SWR
+      - name: Login to Huawei Cloud SWR
+        uses: huaweicloud/swr-login@v2.1.0
+        with:
+          region: cn-east-3
+          access-key-id: ${{ secrets.ACCESSKEY }}
+          access-key-secret: ${{ secrets.SECRETACCESSKEY }}
+
       # Generate metadata for Docker images
       - name: Docker meta
         id: meta
@@ -53,7 +62,7 @@ jobs:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/maibot
 
       # Build and push AMD64 image by digest
-      - name: Build and push AMD64
+      - name: Build and push AMD64 to Docker Hub
         id: build
         uses: docker/build-push-action@v5
         with:
@@ -68,11 +77,26 @@ jobs:
             BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
             VCS_REF=${{ github.sha }}
 
+      # Build and push AMD64 image to Huawei Cloud SWR
+      - name: Build and push AMD64 to Huawei Cloud SWR
+        id: build-swr
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64
+          labels: ${{ steps.meta.outputs.labels }}
+          file: ./Dockerfile
+          outputs: type=image,name=swr.cn-east-3.myhuaweicloud.com/${{ secrets.SWR_ORGANIZATION }}/maibot,push-by-digest=true,name-canonical=true,push=true
+          build-args: |
+            BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            VCS_REF=${{ github.sha }}
+
   build-arm64:
     name: Build ARM64 Image
     runs-on: ubuntu-24.04-arm
     outputs:
       digest: ${{ steps.build.outputs.digest }}
+      digest-swr: ${{ steps.build-swr.outputs.digest }}
     steps:
       - name: Check out git repository
         uses: actions/checkout@v4
@@ -99,6 +123,14 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # Log in to Huawei Cloud SWR
+      - name: Login to Huawei Cloud SWR
+        uses: huaweicloud/swr-login@v2.1.0
+        with:
+          region: cn-east-3
+          access-key-id: ${{ secrets.ACCESSKEY }}
+          access-key-secret: ${{ secrets.SECRETACCESSKEY }}
+
       # Generate metadata for Docker images
       - name: Docker meta
         id: meta
@@ -107,7 +139,7 @@ jobs:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/maibot
 
       # Build and push ARM64 image by digest
-      - name: Build and push ARM64
+      - name: Build and push ARM64 to Docker Hub
         id: build
         uses: docker/build-push-action@v5
         with:
@@ -118,6 +150,20 @@ jobs:
           cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/maibot:dev-arm64-buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/maibot:dev-arm64-buildcache,mode=max
           outputs: type=image,name=${{ secrets.DOCKERHUB_USERNAME }}/maibot,push-by-digest=true,name-canonical=true,push=true
+          build-args: |
+            BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            VCS_REF=${{ github.sha }}
+
+      # Build and push ARM64 image to Huawei Cloud SWR
+      - name: Build and push ARM64 to Huawei Cloud SWR
+        id: build-swr
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/arm64/v8
+          labels: ${{ steps.meta.outputs.labels }}
+          file: ./Dockerfile
+          outputs: type=image,name=swr.cn-east-3.myhuaweicloud.com/${{ secrets.SWR_ORGANIZATION }}/maibot,push-by-digest=true,name-canonical=true,push=true
           build-args: |
             BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
             VCS_REF=${{ github.sha }}
@@ -139,6 +185,14 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # Log in to Huawei Cloud SWR
+      - name: Login to Huawei Cloud SWR
+        uses: huaweicloud/swr-login@v2.1.0
+        with:
+          region: cn-east-3
+          access-key-id: ${{ secrets.ACCESSKEY }}
+          access-key-secret: ${{ secrets.SECRETACCESSKEY }}
+
       # Generate metadata for Docker images
       - name: Docker meta
         id: meta
@@ -149,7 +203,7 @@ jobs:
             type=raw,value=dev
             type=schedule,pattern=dev-{{date 'YYMMDD'}}
 
-      - name: Create and Push Manifest
+      - name: Create and Push Manifest to Docker Hub
         run: |
           # 为每个标签创建多架构镜像
           for tag in $(echo "${{ steps.meta.outputs.tags }}" | tr '\n' ' '); do
@@ -158,3 +212,15 @@ jobs:
               ${{ secrets.DOCKERHUB_USERNAME }}/maibot@${{ needs.build-amd64.outputs.digest }} \
               ${{ secrets.DOCKERHUB_USERNAME }}/maibot@${{ needs.build-arm64.outputs.digest }}
           done
+
+      - name: Create and Push Manifest to Huawei Cloud SWR
+        run: |
+          # 为华为云创建多架构镜像
+          docker buildx imagetools create -t swr.cn-east-3.myhuaweicloud.com/${{ secrets.SWR_ORGANIZATION }}/maibot:dev \
+            swr.cn-east-3.myhuaweicloud.com/${{ secrets.SWR_ORGANIZATION }}/maibot@${{ needs.build-amd64.outputs.digest-swr }} \
+            swr.cn-east-3.myhuaweicloud.com/${{ secrets.SWR_ORGANIZATION }}/maibot@${{ needs.build-arm64.outputs.digest-swr }}
+          
+          docker buildx imagetools create -t swr.cn-east-3.myhuaweicloud.com/${{ secrets.SWR_ORGANIZATION }}/maibot:dev-$(date -u +'%y%m%d') \
+            swr.cn-east-3.myhuaweicloud.com/${{ secrets.SWR_ORGANIZATION }}/maibot@${{ needs.build-amd64.outputs.digest-swr }} \
+            swr.cn-east-3.myhuaweicloud.com/${{ secrets.SWR_ORGANIZATION }}/maibot@${{ needs.build-arm64.outputs.digest-swr }}
+
